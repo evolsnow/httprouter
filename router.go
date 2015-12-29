@@ -110,14 +110,20 @@ func (ps Params) ByName(name string) string {
 // Router is a http.Handler which can be used to dispatch requests to different
 // handler functions via configurable routes
 type Router struct {
-	trees map[string]*node
+	trees                  map[string]*node
+
+	// Make it convenient to add more routes later
+	// For example if BaseURL set to "/api/a/long/base/url" , route of r.GET("/foo",handler) is
+	// now  "/api/a/long/base/url/foo",
+	// the route of r.GET("/foo/bar", anotherHandler) is now "api/a/long/base/url/foo/bar".
+	BaseURL                string
 
 	// Enables automatic redirection if the current route can't be matched but a
 	// handler for the path with (without) the trailing slash exists.
 	// For example if /foo/ is requested but a route only exists for /foo, the
 	// client is redirected to /foo with http status code 301 for GET requests
 	// and 307 for all other request methods.
-	RedirectTrailingSlash bool
+	RedirectTrailingSlash  bool
 
 	// If enabled, the router tries to fix the current request path, if no
 	// handle is registered for it.
@@ -128,7 +134,7 @@ type Router struct {
 	// all other request methods.
 	// For example /FOO and /..//Foo could be redirected to /foo.
 	// RedirectTrailingSlash is independent of this option.
-	RedirectFixedPath bool
+	RedirectFixedPath      bool
 
 	// If enabled, the router checks if another method is allowed for the
 	// current route, if the current request can not be routed.
@@ -140,19 +146,19 @@ type Router struct {
 
 	// Configurable http.Handler which is called when no matching route is
 	// found. If it is not set, http.NotFound is used.
-	NotFound http.Handler
+	NotFound               http.Handler
 
 	// Configurable http.Handler which is called when a request
 	// cannot be routed and HandleMethodNotAllowed is true.
 	// If it is not set, http.Error with http.StatusMethodNotAllowed is used.
-	MethodNotAllowed http.Handler
+	MethodNotAllowed       http.Handler
 
 	// Function to handle panics recovered from http handlers.
 	// It should be used to generate a error page and return the http error code
 	// 500 (Internal Server Error).
 	// The handler can be used to keep your server from crashing because of
 	// unrecovered panics.
-	PanicHandler func(http.ResponseWriter, *http.Request, interface{})
+	PanicHandler           func(http.ResponseWriter, *http.Request, interface{})
 }
 
 // Make sure the Router conforms with the http.Handler interface
@@ -225,7 +231,10 @@ func (r *Router) Handle(method, path string, handle Handle) {
 		root = new(node)
 		r.trees[method] = root
 	}
+	if r.BaseURL != "" {
+		path = r.BaseURL + path
 
+	}
 	root.addRoute(path, handle)
 }
 
@@ -256,7 +265,7 @@ func (r *Router) HandlerFunc(method, path string, handler http.HandlerFunc) {
 // use http.Dir:
 //     router.ServeFiles("/src/*filepath", http.Dir("/var/www"))
 func (r *Router) ServeFiles(path string, root http.FileSystem) {
-	if len(path) < 10 || path[len(path)-10:] != "/*filepath" {
+	if len(path) < 10 || path[len(path) - 10:] != "/*filepath" {
 		panic("path must end with /*filepath in path '" + path + "'")
 	}
 
@@ -307,8 +316,8 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			}
 
 			if tsr && r.RedirectTrailingSlash {
-				if len(path) > 1 && path[len(path)-1] == '/' {
-					req.URL.Path = path[:len(path)-1]
+				if len(path) > 1 && path[len(path) - 1] == '/' {
+					req.URL.Path = path[:len(path) - 1]
 				} else {
 					req.URL.Path = path + "/"
 				}
