@@ -23,7 +23,7 @@ func (ps Params) Get(key string) string {
 func (ps Params)GetInt(key string) (value int) {
 	value, err := strconv.Atoi(ps.ByName(key))
 	if err != nil {
-		return 0
+		return
 	}
 	return
 }
