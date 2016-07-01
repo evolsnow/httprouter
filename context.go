@@ -20,10 +20,18 @@ func (ps Params) Get(key string) string {
 	return ps.ByName(key)
 }
 
-func (ps Params)GetInt(key string) (value int) {
+func (ps Params) GetInt(key string) (value int) {
 	value, err := strconv.Atoi(ps.ByName(key))
 	if err != nil {
 		return
 	}
 	return
+}
+
+func (ps Params) GetUint(key string) (value uint) {
+	intValue, err := strconv.Atoi(ps.ByName(key))
+	if err != nil {
+		return
+	}
+	return uint(intValue)
 }
