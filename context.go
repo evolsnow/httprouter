@@ -28,6 +28,14 @@ func (ps Params) GetInt(key string) (value int) {
 	return
 }
 
+func (ps Params) GetInt32(key string) (value int32) {
+	value, err := strconv.Atoi(ps.ByName(key))
+	if err != nil {
+		return
+	}
+	return int32(value)
+}
+
 func (ps Params) GetUint(key string) (value uint) {
 	intValue, err := strconv.Atoi(ps.ByName(key))
 	if err != nil {
